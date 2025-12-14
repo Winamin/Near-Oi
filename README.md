@@ -15,7 +15,6 @@ Unlike LLMs, deep learning, or symbolic regression, NearOi **invents**:
 - ✅ **Applies Noether’s theorem from first principles** to derive conservation laws  
 - ✅ **Constructs complete quantum field theories** with topological terms  
 - ✅ **Predicts phase transitions** (e.g., at T=0.73)  
-- ✅ **All in 0.36 seconds on CPU—no GPU required**
 
 > Current AI systems **cannot solve this**—they require training data, predefined bases, or similar tasks. NearOi needs **none**.
 
