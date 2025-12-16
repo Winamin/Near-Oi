@@ -371,13 +371,14 @@ class NearOi:
     def inference_pipeline(
             self,
             task: Dict[str, Any],
-            features: np.ndarray = None
+            features: np.ndarray = None,
+            raw_data: Dict[str, np.ndarray] = None
     ) -> Dict[str, Any]:
         """
         完整推理流程（8阶段）
 
         论文: Inference proceeds in 8 stages:
-        1. Feature input
+        1. Raw data input (instead of feature input)
         2. Concept activation
         3. Rule matching
         4. C_i computation
@@ -395,9 +396,21 @@ class NearOi:
         print(f"Task: {task.get('description', 'N/A')}")
         print()
 
-        if features is None:
+        # 直接使用原始数据，不进行特征提取
+        if raw_data is not None and 'positions' in raw_data:
+            positions = raw_data['positions']
+            if len(positions.shape) > 2:
+                positions = positions[0]
+            flat_positions = positions.flatten()[:4]  # 只取前4个值
+            if len(flat_positions) < 4:
+                flat_positions = np.pad(flat_positions, (0, 4 - len(flat_positions)), 'constant')
+            features = flat_positions
+            self.reasoning_trace.append(f"Stage 1: Raw data input, shape={positions.shape}")
+        elif features is None:
             features = np.random.rand(4)
-        self.reasoning_trace.append(f"Stage 1: Feature input, dim={len(features)}")
+            self.reasoning_trace.append(f"Stage 1: Random features, dim={len(features)}")
+        else:
+            self.reasoning_trace.append(f"Stage 1: Feature input, dim={len(features)}")
 
         activated_concepts = self.conceptual_layer_activation(features)
         self.reasoning_trace.append(f"Stage 2: Activated concepts: {activated_concepts}")
@@ -750,16 +763,28 @@ class AdvancedNearOi(NearOi):
                 else:
                     perturbed_data[key] = value
             
-            print(" STAGE 1: Raw data analysis")
-            features = self._extract_physics_features(perturbed_data, add_noise=True)
-            print(f"Extracted {len(features)} dimensional features")
+            print(" STAGE 1: Raw data analysis - Using raw data directly")
+            # 直接使用原始数据，不进行特征提取
+            print(f"Using raw data directly: positions shape={perturbed_data.get('positions', 'N/A').shape if 'positions' in perturbed_data else 'N/A'}")
 
-            print(" STAGE 2: Concept activation")
+            print(" STAGE 2: Concept activation - Using raw data")
             for concept in self.concepts.values():
                 concept.boundary = np.clip(
                     concept.boundary + np.random.uniform(-0.1, 0.1),
                     0.1, 0.8
                 )
+            # 使用原始数据的简单表示作为概念激活的输入
+            if 'positions' in perturbed_data:
+                positions = perturbed_data['positions']
+                if len(positions.shape) > 2:
+                    positions = positions[0]
+                flat_positions = positions.flatten()[:4]  # 只取前4个值
+                if len(flat_positions) < 4:
+                    flat_positions = np.pad(flat_positions, (0, 4 - len(flat_positions)), 'constant')
+                features = flat_positions
+            else:
+                features = np.random.rand(4)
+            
             activated_concepts = self.conceptual_layer_activation(features)
             print(f"Activated concepts: {activated_concepts}")
 
@@ -839,153 +864,27 @@ class AdvancedNearOi(NearOi):
         return best_result
 
     def _extract_physics_features(self, data: Dict[str, np.ndarray], add_noise: bool = False) -> np.ndarray:
-        """增强的物理特征提取 - 专门优化用于检测SU(2)×Z₃_φ对称性"""
-        if 'positions' not in data:
-            return np.random.rand(4)
-        
-        positions = data['positions']
-        if len(positions) < 10:
-            return np.random.rand(4)
-        
-        features = []
-        
-        x, y = positions[:, 0], positions[:, 1]
-        angles = np.arctan2(y, x)
-        radii = np.linalg.norm(positions, axis=1)
-        
-        angle_hist_36, _ = np.histogram(angles, bins=36, range=(-np.pi, np.pi))
-        z3_peaks = angle_hist_36[12] + angle_hist_36[24]
-        features.append(z3_peaks / np.sum(angle_hist_36))
-        
-        angle_hist_12, _ = np.histogram(angles, bins=12, range=(-np.pi, np.pi))
-        angle_hist_24, _ = np.histogram(angles, bins=24, range=(-np.pi, np.pi))
-        features.extend(angle_hist_12[:2])
-        features.extend(angle_hist_24[:2])
-        
-        if 'charges' in data and 'spins' in data:
-            charges = data['charges']
-            spins = data['spins']
+        """直接返回原始数据而不进行特征提取"""
+        # 直接使用原始数据，不进行任何特征提取
+        if 'positions' in data:
+            positions = data['positions']
+            # 如果是时间序列数据，只使用第一个时间步
+            if len(positions.shape) > 2:
+                positions = positions[0]
             
-            if len(charges.shape) > 1:
-                charges = charges.flatten()
-                spins = spins.flatten()
+            # 将位置数据展平为特征向量
+            flat_positions = positions.flatten()
             
-            su2_invariant = charges**2 + spins**2
-            invariant_std = np.std(su2_invariant) / (np.mean(su2_invariant) + 1e-10)
-            features.append(invariant_std)
+            # 如果数据点太少，用零填充
+            if len(flat_positions) < 4:
+                flat_positions = np.pad(flat_positions, (0, 4 - len(flat_positions)), 'constant')
             
-            complex_field = charges + 1j * spins
-            
-            phase = np.angle(complex_field)
-            if len(phase) > 1:
-                phase_gradient = np.diff(np.unwrap(phase))
-                phase_jumps = np.sum(np.abs(phase_gradient) > np.pi/2)
-                features.append(phase_jumps / len(phase_gradient))
-            else:
-                features.append(0)
-            
-            tau1_action = charges * spins
-            tau2_action = charges * spins
-            tau3_action = charges**2 - spins**2
-            
-            tau_stats = [np.mean(tau1_action), np.mean(tau2_action), np.mean(tau3_action)]
-            features.extend(tau_stats[:2])
-            
-            if len(complex_field) == len(angles):
-                rotated_angles = angles + 2*np.pi/3
-                from scipy.interpolate import interp1d
-                try:
-                    sort_idx = np.argsort(angles)
-                    f_real = interp1d(angles[sort_idx], np.real(complex_field)[sort_idx], 
-                                     kind='linear', fill_value='extrapolate')
-                    f_imag = interp1d(angles[sort_idx], np.imag(complex_field)[sort_idx], 
-                                     kind='linear', fill_value='extrapolate')
-                    rotated_field = f_real(rotated_angles) + 1j * f_imag(rotated_angles)
-                    
-                    rotation_diff = np.mean(np.abs(complex_field - rotated_field))
-                    features.append(rotation_diff / (np.mean(np.abs(complex_field)) + 1e-10))
-                except:
-                    features.append(0.5)
-            else:
-                features.append(0)
-            
-            if len(charges) > 5:
-                quartic_moment = np.mean((charges**2 + spins**2)**2)
-                features.append(quartic_moment / (np.mean(charges**2 + spins**2)**2 + 1e-10))
-            else:
-                features.append(0)
-        else:
-            features.extend([0.5, 0.5, 0, 0, 0, 0.5])
+            # 只返回前4个值作为特征
+            return flat_positions[:4]
         
-        try:
-            from scipy.spatial import Delaunay
-            tri = Delaunay(positions)
-            edges = set()
-            for simplex in tri.simplices:
-                for i in range(3):
-                    edge = tuple(sorted([simplex[i], simplex[(i+1)%3]]))
-                    edges.add(edge)
-            
-            edge_lengths = []
-            for i, j in edges:
-                edge_lengths.append(np.linalg.norm(positions[i] - positions[j]))
-            
-            avg_edge_length = np.mean(edge_lengths) if edge_lengths else 0
-            edge_length_std = np.std(edge_lengths) if edge_lengths else 0
-            features.append(avg_edge_length)
-            features.append(edge_length_std)
-        except:
-            features.extend([0, 0])
-        
-        rotations = [0, 2*np.pi/3, 4*np.pi/3]
-        rotation_invariance = []
-        
-        x = np.array(x)
-        y = np.array(y)
-        
-        for angle in rotations:
-            cos_a, sin_a = np.cos(angle), np.sin(angle)
-            R = np.array([[cos_a, -sin_a], [sin_a, cos_a]])
-            rotated = positions @ R.T
-            
-            try:
-                orig_hist, _ = np.histogram2d(x, y, bins=10)
-                rot_hist, _ = np.histogram2d(rotated[:, 0], rotated[:, 1], bins=10)
-            except:
-                orig_hist, _ = np.histogram(x, bins=10)
-                rot_hist, _ = np.histogram(rotated[:, 0], bins=10)
-            
-            orig_hist = orig_hist / (np.sum(orig_hist) + 1e-10)
-            rot_hist = rot_hist / (np.sum(rot_hist) + 1e-10)
-            
-            similarity = 1 - np.mean(np.abs(orig_hist - rot_hist))
-            rotation_invariance.append(similarity)
-        
-        features.append(np.mean(rotation_invariance))
-        
-        if len(positions.shape) > 2:
-            velocities = np.diff(positions, axis=0)
-            vel_corr = np.corrcoef(velocities[:-1].flatten(), velocities[1:].flatten())[0, 1]
-            features.append(vel_corr if not np.isnan(vel_corr) else 0)
-        else:
-            features.append(0)
-        
-        features = np.array(features)
-        features = (features - np.mean(features)) / (np.std(features) + 1e-10)
-        
-        if add_noise:
-            noise_level = 0.05
-            features = features + np.random.normal(0, noise_level, features.shape)
-        
-        if len(features) > 4:
-            variances = np.var(features, axis=0) if len(features.shape) > 1 else np.array([np.var(features)])
-            if len(variances) > 4:
-                top_indices = np.argsort(variances)[-4:]
-                features = features[top_indices]
-            else:
-                features = features[:4]
-        
-        return features[:4]
+        # 如果没有位置数据，返回随机特征
+        return np.random.rand(4)
+                
 
     def _detect_hidden_symmetry(self, data: Dict[str, np.ndarray], concepts: List[str]) -> Dict:
         """增强的对称性检测算法 - 包含多时间尺度分析"""

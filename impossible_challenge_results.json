@@ -3,26 +3,27 @@
     "name": "Impossible Physics Challenge",
     "hidden_symmetry": "SU(2)\u00d7Z\u2083_\u03c6",
     "description": "Zero-shot scientific discovery from raw experimental data",
-    "timestamp": "2025-12-15 17:57:29"
+    "timestamp": "2025-12-16 19:20:31"
   },
   "discovery_results": {
     "symmetry": {
       "symmetry_type": "SU(2)\u00d7Z\u2083_\u03c6",
-      "confidence": 0.8107353933991709,
+      "confidence": 0.81518787287551,
       "evidence": {
         "peaks": [
-          4.125,
-          57.291666666666664,
-          123.28125,
-          177.29166666666666,
-          243.28125,
-          295.875
+          4.375,
+          65.41666666666667,
+          125.41666666666667,
+          185.41666666666666,
+          234.58333333333334,
+          305.4166666666667,
+          355.625
         ],
-        "su2_score": 0.3135737354956583,
-        "z3_score": 0.968,
-        "time_consistency": 0.986804308666928,
-        "correlation": 0.9432111281303728,
-        "threshold": 0.2762001708082903
+        "su2_score": 0.33141870682616587,
+        "z3_score": 0.9884444444444445,
+        "time_consistency": 0.9926942100685126,
+        "correlation": 0.9641451048895312,
+        "threshold": 0.2996953538741449
       }
     },
     "conservation": {
@@ -63,15 +64,15 @@
     "validation": {
       "validation_passed": "True",
       "symmetry_score": 0.6666666666666667,
-      "coupling_score": 0.9432111281303728,
-      "conservation_score": 0.7496300051057785,
-      "confidence": 0.7496300051057785,
+      "coupling_score": 0.9641451048895312,
+      "conservation_score": 0.755910198133526,
+      "confidence": 0.755910198133526,
       "predicted_vs_observed": "Z\u2083 symmetry verified with 0.67 accuracy"
     },
-    "confidence": 0.7496300051057785,
-    "symmetry_consistency": 0.6,
+    "confidence": 0.9070922377602311,
+    "symmetry_consistency": 0.7,
     "num_experiments": 10
   },
-  "execution_time": 0.17218470573425293,
+  "execution_time": 0.015550613403320312,
   "overall_success": "True"
 }
