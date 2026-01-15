@@ -256,7 +256,7 @@ If you use this implementation in your research, please cite:
 
 ## 👤 Author
 
-**Yingxu Wang**
+**Github - Link**
 - Email: yingxuw814@gmail.com
 - Independent Researcher/High School Student
 
@@ -266,8 +266,7 @@ This work builds on the QM9 dataset (Ruddigkeit et al., 2012) and implements the
 
 ## 🔗 Links
 
-- [Paper PDF](Emergent_Pattern_Detection_Through_Iterative_Computational_Unit_Interactions_with_Bounded_State_Dynamics.pdf)
-- [QM9 Dataset](https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm9.pkl.gz)
+- [QM9 Dataset]([https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm9.pkl.gz](https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/gdb9.tar.gz))
 
 ## ⚠️ Note
 
