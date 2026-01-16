@@ -124,7 +124,7 @@ car-system/
 This implementation is based on the paper:
 
 > **Emergent Pattern Detection Through Iterative Computational Unit Interactions with Bounded State Dynamics**  
-> *Yingxu Wang* (January 2026)
+> *Github-Link* (January 2026)
 
 ### Key Differences from Deep Neural Networks
 
@@ -257,7 +257,7 @@ If you use this implementation in your research, please cite:
 ## 👤 Author
 
 **Github - Link**
-- Email: yingxuw814@gmail.com
+- Email: wangwang228879@163.com
 - Independent Researcher/High School Student
 
 ## 🙏 Acknowledgments
