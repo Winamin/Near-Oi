@@ -1,5 +1,6 @@
 # CAR System: Knowledge-Driven Gradient-Free Optimization
 
+[![DOI](https://img.shields.io/badge/DOI-10.17605/OSF.IO/3PR4W-blue)](https://doi.org/10.17605/OSF.IO/3PR4W)
 ## Overview
 
 CAR (Compare-Adjust-Record) is a novel computational architecture for property prediction through iterative unit interactions without gradient-based optimization. This system demonstrates that intelligent behavior can emerge from simple local interaction protocols between autonomous computational units.
@@ -211,5 +212,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Author
 
-**Yingxu Wang**
+**Link**
 - Email: wangwang228879@163.com
